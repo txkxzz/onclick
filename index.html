@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jogo de Tiro</title>
+  <style>
+    #canvas {
+      border: 1px solid black;
+      margin: 0 auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="canvas" width="800" height="600"></canvas>
+
+  <script>
+    
+    var canvas = document.getElementById('canvas');
+    var context = canvas.getContext('2d');
+    var player = {
+      x: canvas.width / 2,
+      y: canvas.height / 2,
+      width: 20,
+      height: 20,
+      color: 'blue'
+    };
+    var bullets = [];
+    var targets = [];
+    var isMouseDown = false;
+
+    function criarAlvos(numeroDeAlvos) {
+      var cores = ['red', 'green', 'yellow', 'orange', 'purple'];
+      for (var i = 0; i < numeroDeAlvos; i++) {
+        var alvo = {
+          x: Math.random() * (canvas.width - 20),
+          y: Math.random() * (canvas.height - 20),
+          width: 10,
+          height: 10,
+          color: cores[Math.floor(Math.random() * cores.length)]
+        };
+        targets.push(alvo);
+      }
+    }
+
+    function update() {
+      context.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (isKeyDown('ArrowUp') && player.y > 0) {
+        player.y -= 5;
+      }
+      if (isKeyDown('ArrowDown') && player.y < canvas.height - player.height) {
+        player.y += 5;
+      }
+      if (isKeyDown('ArrowLeft') && player.x > 0) {
+        player.x -= 5;
+      }
+      if (isKeyDown('ArrowRight') && player.x < canvas.width - player.width) {
+        player.x += 5;
+      }
+
+      context.fillStyle = player.color;
+      context.fillRect(player.x, player.y, player.width, player.height);
+
+      targets.forEach(function(target) {
+        context.fillStyle = target.color;
+        context.fillRect(target.x, target.y, target.width, target.height);
+      });
+
+      bullets.forEach(function(bullet) {
+        bullet.x += bullet.dx;
+        bullet.y += bullet.dy;
+        context.fillStyle = bullet.color;
+        context.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        
+        targets.forEach(function(target, targetIndex) {
+          if (bullet.x < target.x + target.width &&
+              bullet.x + bullet.width > target.x &&
+              bullet.y < target.y + target.height &&
+              bullet.y + bullet.height > target.y) {
+           
+            targets.splice(targetIndex, 1);
+            bullets.splice(bullets.indexOf(bullet), 1);
+          }
+        });
+      });
+
+      if (targets.length === 0) {
+        criarAlvos(5);
+      }
+
+      requestAnimationFrame(update);
+    }
+
+    canvas.addEventListener('mousedown', function() {
+      isMouseDown = true;
+    });
+    canvas.addEventListener('mouseup', function() {
+      isMouseDown = false;
+    });
+    canvas.addEventListener('mousemove', function(event) {
+      var rect = canvas.getBoundingClientRect();
+      var mouseX = event.clientX - rect.left;
+      var mouseY = event.clientY - rect.top;
+      var angle = Math.atan2(mouseY - player.y, mouseX - player.x);
+
+      if (isMouseDown) {
+        
+        var bullet = {
+          x: player.x,
+          y: player.y,
+          width: 5,
+          height: 5,
+          color: 'black',
+          dx: Math.cos(angle) * 5,
+          dy: Math.sin(angle) * 5
+        };
+        bullets.push(bullet);
+      }
+    });
+
+    var keys = {};
+    function isKeyDown(key) {
+      return keys[key];
+    }
+    window.addEventListener('keydown', function(event) {
+      keys[event.key] = true;
+    });
+    window.addEventListener('keyup', function(event) {
+      keys[event.key] = false;
+    });
+
+    criarAlvos(5);
+    update();
+  </script>
+</body>
+</html>
